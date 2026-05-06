@@ -1,0 +1,14 @@
+services:
+  notebook:
+    image: quay.io/jupyter/scipy-notebook:latest
+    ports:
+      - "8888:8888"
+    volumes:
+      - .:/home/jovyan/work
+    # Load environment variables from the .env file
+    env_file:
+      - .env
+    environment:
+      # Use the variable defined in your .env file
+      - JUPYTER_TOKEN=${JUPYTER_TOKEN}
+    command: start-notebook.sh --NotebookApp.notebook_dir='/home/jovyan/work'

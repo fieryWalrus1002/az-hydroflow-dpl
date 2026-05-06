@@ -1,0 +1,11 @@
+# Ignore the local VS Code settings and dev container configuration, as these are specific to me and not relevant to other developers. Each developer can set up their own local environment as needed.
+.vscode/
+.devcontainer/
+.pycache/
+.venv/
+
+# Keep it secret! Keep it safe!
+.env
+
+# Ignore the random notes I paste in for reference during development. These are not meant to be committed to the repo.
+.notes/

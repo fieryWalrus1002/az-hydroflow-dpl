@@ -9,3 +9,15 @@
 
 # Ignore the random notes I paste in for reference during development. These are not meant to be committed to the repo.
 .notes/
+
+# Jupyter Notebook checkpoints & local caches
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+__pycache__/
+*.pyc
+
+# Local data directories (we don't want to commit massive raw datasets to Git)
+data/raw/
+data/bronze/
+data/silver/
+data/quarantine/

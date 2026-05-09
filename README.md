@@ -19,6 +19,11 @@ After establishing the data inputs, prototype the data validation using Pydantic
   * Add in a dead-letter directory for failed data validation?
   * Can test with a valid data source, but an invalid schema to show that we can track this kind of thing.
 
+#### Data sources
+
+* [GEO Aqua Watch](https://www.geoaquawatch.org/water-quality-database-inventory/) has a wide array of datasets available.
+* [EOSDIS Earthdata](https://urs.earthdata.nasa.gov)
+
 #### Data folder layout
 
 We need to start our data pipeline out right. Ensure we have a landing zone to keep the raw data, a dead-letter zone for failed validation, a standardized bronze layer for the parquet format with added metadata, and a silver for the clean, validated data files. We will continue this pattern later in the data lake. 

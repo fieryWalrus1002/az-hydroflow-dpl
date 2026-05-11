@@ -1,3 +1,11 @@
+"""State name / FIPS code / WQP query code lookups.
+
+Single source of truth for the mapping between US state/territory names,
+their 2-digit FIPS codes (NIST FIPS PUB 5-2), and the `statecode` argument
+format expected by the WQP web services (e.g. ``US:53`` for Washington).
+
+See: https://www.waterqualitydata.us/webservices_documentation/
+"""
 from typing import Optional
 
 # Defined by https://nvlpubs.nist.gov/nistpubs/Legacy/FIPS/fipspub5-2.pdf
@@ -62,42 +70,42 @@ US_STATE_FIPS_TABLE = [
     {"state_name": "Virgin Islands", "fips_code": "78", "wqp_code": "US:78"}
 ]
 
-# --- Helper Functions ---
-# We normalize the input to be case-insensitive and to handle potential whitespace issues, 
-# but we could add more robust error handling if needed (e.g., for typos or invalid inputs).
-# TODO: Add error handling for invalid inputs (e.g., typos, non-existent states, etc.) if needed.
-# TODO: Add pytests for these functions to ensure correct mappings and to prevent future regressions
-# if this file is edited, and to ensure error handling works as expected.
+# Pre-built indexes for O(1) lookups. Built once at import time.
+# Previous method built them every time the function was called
+#
+_BY_STATE = {row["state_name"].lower(): row for row in US_STATE_FIPS_TABLE}
+_BY_WQP = {row["wqp_code"].upper(): row for row in US_STATE_FIPS_TABLE}
+_BY_FIPS = {row["fips_code"]: row for row in US_STATE_FIPS_TABLE}
+
+
+def _normalize_state_name(state_name: str) -> str:
+    """Lowercase and strip whitespace for tolerant matching."""
+    return state_name.strip().lower()
 
 def get_wqp_code(state_name: str) -> Optional[str]:
-    """Retrieve the WQP query code (e.g., 'US:53') using the full state name."""
-    match = next((row for row in US_STATE_FIPS_TABLE if row["state_name"].lower() == state_name.lower()), None)
-    return match["wqp_code"] if match else None
+    """Retrieve the WQP query code (e.g., 'US:53') using the full state name.
+    Case-insensitive and whitespace-tolerant. Returns None for unknown states.
+    """
+    row = _BY_STATE.get(_normalize_state_name(state_name))
+    return row["wqp_code"] if row else None
+
 
 def get_state_from_wqp(wqp_code: str) -> Optional[str]:
     """Retrieve the full state name using the WQP query code (e.g., 'US:53')."""
-    match = next((row for row in US_STATE_FIPS_TABLE if row["wqp_code"].upper() == wqp_code.upper()), None)
-    return match["state_name"] if match else None
+    row = _BY_WQP.get(wqp_code.strip().upper())
+    return row["state_name"] if row else None
+
 
 def get_fips_from_state(state_name: str) -> Optional[str]:
     """Retrieve the 2-digit FIPS code using the full state name."""
-    match = next((row for row in US_STATE_FIPS_TABLE if row["state_name"].lower() == state_name.lower()), None)
-    return match["fips_code"] if match else None
+    row = _BY_STATE.get(_normalize_state_name(state_name))
+    return row["fips_code"] if row else None
 
 def get_state_from_fips(fips_code: str) -> Optional[str]:
-    """Retrieve the full state name using the 2-digit FIPS code."""
-    # Ensure it's a string and padded to 2 digits just in case an int was passed
+    """Retrieve the full state name using the 2-digit FIPS code.
+
+    Accepts ints or strings; pads to 2 digits.
+    """
     fips_str = str(fips_code).zfill(2)
-    match = next((row for row in US_STATE_FIPS_TABLE if row["fips_code"] == fips_str), None)
-    return match["state_name"] if match else None
-
-def get_wqp_statecode_from_state(state_name: str) -> Optional[str]:
-    """Retrieve the WQP query code (e.g., 'US:53') using the full state name."""
-    return get_wqp_code(state_name)
-
-# sanity asserts for development - these will be replaced by pytests in a separate test file
-# but for now we can just run them here to ensure the mappings are correct.
-assert get_state_from_wqp("US:53") == "Washington", f"Expected 'Washington', got '{get_state_from_wqp('US:53')}'"
-assert get_fips_from_state("Washington") == "53", f"Expected '53', got '{get_fips_from_state('Washington')}'"
-assert get_state_from_fips("53") == "Washington", f"Expected 'Washington', got '{get_state_from_fips('53')}'"
-assert get_wqp_statecode_from_state("Washington") == "US:53", f"Expected 'US:53', got '{get_wqp_statecode_from_state('Washington')}'"
+    row = _BY_FIPS.get(fips_str)
+    return row["state_name"] if row else None

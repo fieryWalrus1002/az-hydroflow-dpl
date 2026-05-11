@@ -81,3 +81,5 @@ data/raw/
 data/bronze/
 data/silver/
 data/quarantine/
+
+.logs/ # place to paste logs from CI/CD action runs while I'm deugging them. Not worth keeping

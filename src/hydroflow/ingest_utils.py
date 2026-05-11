@@ -6,6 +6,7 @@ format expected by the WQP web services (e.g. ``US:53`` for Washington).
 
 See: https://www.waterqualitydata.us/webservices_documentation/
 """
+
 from typing import Optional
 
 # Defined by https://nvlpubs.nist.gov/nistpubs/Legacy/FIPS/fipspub5-2.pdf
@@ -67,7 +68,7 @@ US_STATE_FIPS_TABLE = [
     {"state_name": "Guam", "fips_code": "66", "wqp_code": "US:66"},
     {"state_name": "Northern Mariana Islands", "fips_code": "69", "wqp_code": "US:69"},
     {"state_name": "Puerto Rico", "fips_code": "72", "wqp_code": "US:72"},
-    {"state_name": "Virgin Islands", "fips_code": "78", "wqp_code": "US:78"}
+    {"state_name": "Virgin Islands", "fips_code": "78", "wqp_code": "US:78"},
 ]
 
 # Pre-built indexes for O(1) lookups. Built once at import time.
@@ -81,6 +82,7 @@ _BY_FIPS = {row["fips_code"]: row for row in US_STATE_FIPS_TABLE}
 def _normalize_state_name(state_name: str) -> str:
     """Lowercase and strip whitespace for tolerant matching."""
     return state_name.strip().lower()
+
 
 def get_wqp_code(state_name: str) -> Optional[str]:
     """Retrieve the WQP query code (e.g., 'US:53') using the full state name.
@@ -100,6 +102,7 @@ def get_fips_from_state(state_name: str) -> Optional[str]:
     """Retrieve the 2-digit FIPS code using the full state name."""
     row = _BY_STATE.get(_normalize_state_name(state_name))
     return row["fips_code"] if row else None
+
 
 def get_state_from_fips(fips_code: str) -> Optional[str]:
     """Retrieve the full state name using the 2-digit FIPS code.

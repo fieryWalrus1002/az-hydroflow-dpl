@@ -12,6 +12,7 @@ from hydroflow.wqp_params import WQPResultsParams, WQPSiteQueryParams
 # WQPSiteQueryParams
 # ---------------------------------------------------------------------------
 
+
 class TestWQPSiteQueryParamsConstruction:
     def test_minimal_valid(self):
         p = WQPSiteQueryParams(state_name="Washington")
@@ -175,6 +176,7 @@ class TestWQPSiteQueryParamsStatecodeProperty:
 # WQPResultsParams
 # ---------------------------------------------------------------------------
 
+
 class TestWQPResultsParamsConstruction:
     def test_minimal_valid(self):
         p = WQPResultsParams(site_id="USGS-12345678")
@@ -211,7 +213,9 @@ class TestWQPResultsParamsConstruction:
 
 class TestWQPResultsParamsDateOrdering:
     def test_end_before_start_rejected(self):
-        with pytest.raises(ValidationError, match="end_date must be on or after start_date"):
+        with pytest.raises(
+            ValidationError, match="end_date must be on or after start_date"
+        ):
             WQPResultsParams(
                 site_id="USGS-12345678",
                 start_date=date(2020, 6, 1),

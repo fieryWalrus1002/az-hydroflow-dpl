@@ -26,7 +26,7 @@ After establishing the data inputs, prototype the data validation using Pydantic
 
 #### Data folder layout
 
-We need to start our data pipeline out right. Ensure we have a landing zone to keep the raw data, a dead-letter zone for failed validation, a standardized bronze layer for the parquet format with added metadata, and a silver for the clean, validated data files. We will continue this pattern later in the data lake. 
+We need to start our data pipeline out right. Ensure we have a landing zone to keep the raw data, a dead-letter zone for failed validation, a standardized bronze layer for the parquet format with added metadata, and a silver for the clean, validated data files. We will continue this pattern later in the data lake.
 
 | Layer | Action | Format |
 | --- | --- | --- |
@@ -47,7 +47,7 @@ Good potential keys:
 
 Bad keys:
 
-* `/timestamp=YYYY-MM-DD-HH-MM/`: You end up with thousands/millions of tiny, empty files. 
+* `/timestamp=YYYY-MM-DD-HH-MM/`: You end up with thousands/millions of tiny, empty files.
 
 Once we have a good enough dataset, we can experimentally find a good key for our partitioning strategy. We can [manually set Row Group size](notes/manually-set-row-group-size.md) with pandas/pyarrow to conduct this experiment.
 
@@ -95,4 +95,4 @@ Use Bicep to define these resources programmatically:
 
 ### Phase 4: Containerize and deploy
 
-If we have a working data flow, we wrap it up into a container we can deploy on Azure. I haven't gotten far enough into the intricacies to know how to do this best. 
+If we have a working data flow, we wrap it up into a container we can deploy on Azure. I haven't gotten far enough into the intricacies to know how to do this best.

@@ -27,6 +27,7 @@ from hydroflow.wqp_params import WQPResultsParams, WQPSiteQueryParams
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def site_params():
     return WQPSiteQueryParams(state_name="Washington", site_type="Stream")
@@ -69,15 +70,22 @@ def fake_results_df():
 # Path helpers
 # ---------------------------------------------------------------------------
 
+
 class TestPaths:
     def test_raw_path_default_dir(self, site_params):
         assert get_raw_path(site_params) == "data/raw/washington_stream_sites.csv"
 
     def test_bronze_path_default_dir(self, site_params):
-        assert get_bronze_path(site_params) == "data/bronze/washington_stream_sites.parquet"
+        assert (
+            get_bronze_path(site_params)
+            == "data/bronze/washington_stream_sites.parquet"
+        )
 
     def test_raw_path_custom_dir(self, site_params, tmp_path):
-        assert get_raw_path(site_params, base_dir=str(tmp_path)) == f"{tmp_path}/washington_stream_sites.csv"
+        assert (
+            get_raw_path(site_params, base_dir=str(tmp_path))
+            == f"{tmp_path}/washington_stream_sites.csv"
+        )
 
     def test_multiword_state_path(self):
         p = WQPSiteQueryParams(state_name="New York", site_type="Stream")
@@ -87,6 +95,7 @@ class TestPaths:
 # ---------------------------------------------------------------------------
 # Persistence (uses tmp_path — real disk I/O, no mocks needed)
 # ---------------------------------------------------------------------------
+
 
 class TestPersistence:
     def test_save_raw_writes_csv(self, site_params, fake_sites_df, tmp_path):
@@ -111,9 +120,12 @@ class TestPersistence:
 # Metadata envelope
 # ---------------------------------------------------------------------------
 
+
 class TestBuildQueryMetadata:
     def test_includes_required_keys(self, site_params):
-        meta = build_query_metadata(site_params, row_count=42, source_metadata={"upstream": "ok"})
+        meta = build_query_metadata(
+            site_params, row_count=42, source_metadata={"upstream": "ok"}
+        )
         assert set(meta.keys()) == {
             "ingested_at_utc",
             "query_params",
@@ -140,6 +152,7 @@ class TestBuildQueryMetadata:
         meta = build_query_metadata(site_params, row_count=0)
         # Should parse cleanly as ISO with timezone.
         from datetime import datetime
+
         parsed = datetime.fromisoformat(meta["ingested_at_utc"])
         assert parsed.tzinfo is not None
 
@@ -147,6 +160,7 @@ class TestBuildQueryMetadata:
 # ---------------------------------------------------------------------------
 # Orchestrators (network mocked)
 # ---------------------------------------------------------------------------
+
 
 class TestIngestWqpSiteData:
     def test_calls_wqp_with_correct_kwargs(self, site_params, fake_sites_df):

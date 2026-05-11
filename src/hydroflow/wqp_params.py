@@ -56,9 +56,9 @@ class _WQPParamsBase(BaseModel):
     """Shared config + helpers for WQP param models."""
 
     model_config = ConfigDict(
-        frozen=True,           # Immutable once constructed.
+        frozen=True,  # Immutable once constructed.
         str_strip_whitespace=True,
-        extra="forbid",        # Typos in field names should fail LOUDLY.
+        extra="forbid",  # Typos in field names should fail LOUDLY.
     )
 
 
@@ -70,13 +70,15 @@ class WQPSiteQueryParams(_WQPParamsBase):
     The Station/search endpoint does NOT filter by date. If you need
     date-bounded queries, use ``WQPResultsParams`` against the Result
     endpoint.
-    
+
     The sites returned by Station/search are the same as those returned by Result, but
     contain only data about the site itself (location, site type, etc.) and not the results
-    which you'll get from the Result endpoint. Reading comprehension is hard. 
+    which you'll get from the Result endpoint. Reading comprehension is hard.
     """
 
-    state_name: str = Field(..., min_length=1, description="Full US state or territory name.")
+    state_name: str = Field(
+        ..., min_length=1, description="Full US state or territory name."
+    )
     site_type: Union[str, list[str]] = Field(
         default="Stream",
         description="Case-sensitive WQP site type(s). E.g., 'Stream', 'Lake, Reservoir, Impoundment'.",

@@ -58,7 +58,7 @@ To start up our jupyter container:
 ``` bash
 # Local dev:
 # Run the docker compose to bring up our scipy container
-docker compose up
+docker compose up -d
 
 # Should be able to connect to the notebook with this:
 http://localhost:8888/?token={$JUPYTER_TOKEN}

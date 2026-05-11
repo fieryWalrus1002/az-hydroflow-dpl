@@ -104,7 +104,7 @@ def get_fips_from_state(state_name: str) -> Optional[str]:
     return row["fips_code"] if row else None
 
 
-def get_state_from_fips(fips_code: str) -> Optional[str]:
+def get_state_from_fips(fips_code: str | int) -> Optional[str]:
     """Retrieve the full state name using the 2-digit FIPS code.
 
     Accepts ints or strings; pads to 2 digits.

@@ -113,6 +113,8 @@ class WQPSiteQueryParams(_WQPParamsBase):
         if v is None:
             return v
         items = [v] if isinstance(v, str) else list(v)
+        if not items:
+            raise ValueError("Must provide at least one value.")
         for item in items:
             if not isinstance(item, str) or not item.strip():
                 raise ValueError("Values must be non-empty strings.")

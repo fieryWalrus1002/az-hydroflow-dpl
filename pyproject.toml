@@ -13,8 +13,13 @@ dependencies = [
     "pydantic>=2.0.0",
     "pydantic-settings",
     "python-dotenv",
-    "pytest>=9.0.3",
     "pyarrow>=24.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0.3",
+    "ruff>=0.3.0",
 ]
 
 [build-system]

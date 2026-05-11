@@ -26,7 +26,7 @@ After establishing the data inputs, prototype the data validation using Pydantic
 
 #### Data folder layout
 
-We need to start our data pipeline out right. Ensure we have a landing zone to keep the raw data, a dead-letter zone for failed validation, a standardized bronze layer for the parquet format with added metadata, and a silver for the clean, validated data files. We will continue this pattern later in the data lake. 
+We need to start our data pipeline out right. Ensure we have a landing zone to keep the raw data, a dead-letter zone for failed validation, a standardized bronze layer for the parquet format with added metadata, and a silver for the clean, validated data files. We will continue this pattern later in the data lake.
 
 | Layer | Action | Format |
 | --- | --- | --- |
@@ -47,7 +47,7 @@ Good potential keys:
 
 Bad keys:
 
-* `/timestamp=YYYY-MM-DD-HH-MM/`: You end up with thousands/millions of tiny, empty files. 
+* `/timestamp=YYYY-MM-DD-HH-MM/`: You end up with thousands/millions of tiny, empty files.
 
 Once we have a good enough dataset, we can experimentally find a good key for our partitioning strategy. We can [manually set Row Group size](notes/manually-set-row-group-size.md) with pandas/pyarrow to conduct this experiment.
 
@@ -58,21 +58,32 @@ To start up our jupyter container:
 ``` bash
 # Local dev:
 # Run the docker compose to bring up our scipy container
-docker compose up
+docker compose up -d
 
 # Should be able to connect to the notebook with this:
 http://localhost:8888/?token={$JUPYTER_TOKEN}
 ```
 
-### Phase 2: Initial Azure IaC Deployment
+### Phase 2: Transition logic and implement testing
 
-Once we have a working prototype, its time to move it onto the cloud. We'll use bicep for this, as the Azure-preferred method. If it was in the homelab, I'd be using Terraform.
+If our notebook data ingestion is successful, it will be time to migrate our logic into a form that we will be able to containerize. This will involve several steps:
+
+* move to a standard src/hydroflow layout
+* implement a test suite for the logic
+* establish CI/CD integration
+* create orchestration layer... maybe app.py style?
+
+### Phase 3: Initial Azure IaC Deployment
+
+Once we have a working prototype locally, its time to move it onto the cloud. We'll use bicep for this, as the Azure-preferred method. If it was in the homelab, I'd be using Terraform.
 
 #### Steps
 
 * Identify the appropriate authentication flow. Managed Identities appeals, but Service Principals is an option as its aimed more at local to cloud dev.
 * Define the infrastructure we need using the infra/*.bicep files.
-* Start a second notebook for interacting with the cloud data. Ensure that the data lands in the appropriate locations on the data lake.
+* Start a notebook for interacting with the cloud data.
+  * Repeat the data ingestion.
+  * Ensure that the data lands in the appropriate locations on the data lake.
 
 #### Deploy Infrastructure
 
@@ -82,15 +93,6 @@ Use Bicep to define these resources programmatically:
 * Azure Key Vault to manage our secrets, as we will connect to the data lake via the notebook locally while we continue to develop. Pydantic has a BaseSettings option, so we'll explore that too.
 * Other authentication tooling?
 
-### Phase 3: Transition logic and implement testing
-
-If our hybrid workflow is successful, it will be time to migrate our logic into a form that we will be able to containerize. This will involve several steps:
-
-* move to a standard src/hydroflow layout
-* implement a test suite for the logic
-* establish CI/CD integration
-* create orchestration layer... maybe app.py style?
-
 ### Phase 4: Containerize and deploy
 
-If we have a working data flow, we wrap it up into a container we can deploy on Azure. I haven't gotten far enough into the intricacies to know how to do this best. 
+If we have a working data flow, we wrap it up into a container we can deploy on Azure. I haven't gotten far enough into the intricacies to know how to do this best.

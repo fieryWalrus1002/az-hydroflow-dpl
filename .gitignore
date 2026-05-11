@@ -1,3 +1,63 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+downloads/
+eggs/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+
+# Pyenv
+.python-version
+
+# Virtual environments
+venv/
+ENV/
+.env
+.venv/
+
+# Jupyter
+.ipynb_checkpoints
+
+# VSCode and editors
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Mypy
+.mypy_cache/
+
+# Logs
+*.log
+
+# Local build artifacts
+__pypackages__/
+
 # Ignore the local VS Code settings and dev container configuration, as these are specific to me and not relevant to other developers. Each developer can set up their own local environment as needed.
 .vscode/
 .devcontainer/
@@ -21,3 +81,5 @@ data/raw/
 data/bronze/
 data/silver/
 data/quarantine/
+
+.logs/ # place to paste logs from CI/CD action runs while I'm deugging them. Not worth keeping

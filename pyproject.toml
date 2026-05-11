@@ -1,0 +1,40 @@
+[project]
+name = "hydroflow"
+version = "0.1.0"
+description = "USGS Water Quality Pipeline"
+readme = "README.md"
+requires-python = ">=3.12"
+# All your dependencies go here in one list
+dependencies = [
+    "pandas>=2.0.0",
+    "duckdb>=1.1.0",
+    "dataretrieval>=1.1.4",
+    "requests>=2.31.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings",
+    "python-dotenv",
+    "pyarrow>=24.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0.3",
+    "ruff>=0.3.0",
+    "pre-commit>=4.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+exclude = ["notebooks/"]
+
+[tool.pytest.ini_options]
+testpaths = ["src/tests"]
+filterwarnings = [
+    "ignore::DeprecationWarning:dataretrieval",
+]

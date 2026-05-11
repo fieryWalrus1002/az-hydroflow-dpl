@@ -1,76 +1,108 @@
-from src.hydroflow.ingest_utils import get_wqp_statecode_from_state
-from dataretrieval import wqp
+"""Ingest WQP site and result data into the raw and bronze landing zones.
+
+The decomposition here puts the network call (``dataretrieval.wqp``) at
+the very edge, with everything else as pure, testable functions that
+operate on ``WQPSiteQueryParams`` / ``WQPResultsParams``.
+
+This keeps the data retrieval logic separate from the data transformation and persistence
+and makes it easier to test the transformation and persistence logic without needing to 
+mock the network calls.
+"""
 from datetime import datetime, timezone
+from typing import Tuple
+from pathlib import Path
+
+from dataretrieval import wqp
 import pandas as pd
-from typing import Tuple    
+  
+from hydroflow.ingest_utils import get_wqp_code
+from hydroflow.wqp_params import WQPResultsParams, WQPSiteQueryParams
 
-# --- State FIPS and WQP Code Mappings are in ingest_utils.py---
-
-### Helper functions for ingesting WQP data and saving to raw and bronze landing zones.
-
-def get_bronze_path(state_name: str, site_type: str) -> str:
-    """Generate the path for the bronze landing file based on the state name and site type.
-    Currently hard-coded to save in a single file per state and site type, but we could easily
-    modify this to include more parameters (e.g., characteristics, date range, etc.) if we wanted
-    to save more granular files in the future."""
-    return f"data/bronze/{state_name.lower().replace(' ', '_')}_{site_type.lower().replace(' ', '_')}_sites.parquet"
+# Path helpers to break the evil hard-coded string spells
+def get_raw_path(params: WQPSiteQueryParams, base_dir: str = "data/raw") -> str:
+    """Path for the raw CSV landing file for a site query."""
+    return f"{base_dir}/{params.slug()}_sites.csv"
 
 
-def get_raw_path(state_name: str, site_type: str) -> str:
-    """Generate the path for the raw landing file based on the state name and site type."""
-    return f"data/raw/{state_name.lower().replace(' ', '_')}_{site_type.lower().replace(' ', '_')}_sites.csv"
+def get_bronze_path(params: WQPSiteQueryParams, base_dir: str = "data/bronze") -> str:
+    """Path for the bronze Parquet file for a site query."""
+    return f"{base_dir}/{params.slug()}_sites.parquet"
 
+# Now the persistence functions here
 
-def save_data_to_raw(df: pd.DataFrame, state_name: str, site_type: str) -> str:
-    """ Save the raw DataFrame to the raw landing zone as a CSV file. Returns the path to the saved file for query purposes. Currently hard-coded to save in a single file per state and site type, but we could easily modify this to include more parameters (e.g., characteristics, date range, etc.) if we wanted to save more granular files in the future."""
-
-    raw_path = get_raw_path(state_name, site_type)
+def save_data_to_raw(df: pd.DataFrame, params: WQPSiteQueryParams, base_dir: str = "data/raw") -> str:
+    """Save a DataFrame to the raw landing zone as CSV. Returns the path."""
+    raw_path = get_raw_path(params, base_dir=base_dir)
+    Path(raw_path).parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(raw_path, index=False)
     print(f"Saved raw landing file to: {raw_path}")
     return raw_path
 
 
-def save_data_to_bronze(df: pd.DataFrame, state_name: str, site_type: str) -> str:
-    """ Save the raw DataFrame to the bronze zone as a parquet file. Returns the path to the saved file for query purposes. Currently hard-coded to save in a single file per state and site type, but we could easily modify this to include more parameters (e.g., characteristics, date range, etc.) if we wanted to save more granular files in the future."""
-    
-    bronze_path = get_bronze_path(state_name, site_type)
+def save_data_to_bronze(df: pd.DataFrame, params: WQPSiteQueryParams, base_dir: str = "data/bronze") -> str:
+    """Save a DataFrame to the bronze zone as Parquet. Returns the path."""
+    bronze_path = get_bronze_path(params, base_dir=base_dir)
+    Path(bronze_path).parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(bronze_path, index=False)
     print(f"Saved bronze landing file to: {bronze_path}")
     return bronze_path
 
-def ingest_wqp_site_data_by_state(state_name: str, site_type: str = 'Stream', characteristics: list = None, start_date: str = None, end_date: str = None) -> tuple[pd.DataFrame, dict]:
-    """Ingest WQP data for a specific state and site type, and for specific characteristics and date range. Returns a tuple of the raw DataFrame and the query metadata."""
 
-    # validate inputs
-    if not state_name:
-        raise ValueError("State name is required.")
-    if not site_type:
-        raise ValueError("Site type is required.")
-    if characteristics and not isinstance(characteristics, list):
-        raise ValueError("Characteristics must be a list of strings.")
-    if start_date and not isinstance(start_date, str):
-        raise ValueError("Start date must be a string in 'YYYY-MM-DD' format.")
-    if end_date and not isinstance(end_date, str):
-        raise ValueError("End date must be a string in 'YYYY-MM-DD' format.")
+# Now the metadata envelope builder, which is a pure function
+# that lets us get rid of the boilerplate validation we had before.
+# Have a single source of truth for what metadata we want to capture for lineage.
 
-    # the dataretrieval package uses the WQP query code (e.g., 'US:53' for Washington) to query the WQP API, so we need to convert our state name to the WQP code using our utility function.
-    fips_code = get_wqp_statecode_from_state(state_name)
+def build_query_metadata(
+    params: WQPSiteQueryParams | WQPResultsParams,
+    row_count: int,
+    source_metadata: object = None,
+) -> dict:
+    """Build a consistent metadata envelope around a query result.
 
-    print(f"Fetching {site_type} monitoring sites in {state_name}...")
+    This is what downstream bronze/silver consumers can rely on for lineage,
+    regardless of what ``dataretrieval`` returns in its own metadata object.
+    """
+    return {
+        "ingested_at_utc": datetime.now(timezone.utc).isoformat(),
+        "query_params": params.model_dump(mode="json"),
+        "wqp_kwargs": params.to_wqp_kwargs(),
+        "row_count": row_count,
+        "source_metadata": source_metadata,
+    }
+    
+    
+# ----- The Orchestrators, the only functions that touch the network, and they just call the pure functions above.
 
-    # Step 1: Find the given site types in the given state
-    sites_df_raw, metadata = wqp.what_sites(statecode=fips_code, siteType=site_type)
-    print(f"Found {len(sites_df_raw)} {site_type} monitoring sites in state:{fips_code}, type:{site_type} for the period {start_date} to {end_date}.")
+def ingest_wqp_site_data(params: WQPSiteQueryParams) -> Tuple[pd.DataFrame, dict]:
+    """Fetch monitoring sites from WQP for the given query params.
 
-    return sites_df_raw, metadata
+    Returns a tuple of (DataFrame, metadata envelope).
+    """
+    kwargs = params.to_wqp_kwargs()
+    print(f"Fetching WQP sites with kwargs: {kwargs}")
 
-def ingest_wqp_site_results(site_id: str) -> tuple[pd.DataFrame, dict]:
-    """Ingest WQP results data for a specific site. This is ALL dates, ALL characteristics. Returns a tuple of the raw DataFrame and the query metadata."""
+    sites_df, source_metadata = wqp.what_sites(**kwargs)
 
-    # validate inputs
-    if not site_id:
-        raise ValueError("Site ID is required.")
-
-    return wqp.get_results(
-        siteid=site_id
+    print(
+        f"Found {len(sites_df)} sites for "
+        f"statecode={params.wqp_statecode}, site_type={params.site_type}."
     )
+
+    metadata = build_query_metadata(params, row_count=len(sites_df), source_metadata=source_metadata)
+    return sites_df, metadata
+
+
+def ingest_wqp_site_results(params: WQPResultsParams) -> Tuple[pd.DataFrame, dict]:
+    """Fetch WQP results for the given query params.
+
+    Returns a tuple of (DataFrame, metadata envelope).
+    """
+    kwargs = params.to_wqp_kwargs()
+    print(f"Fetching WQP results with kwargs: {kwargs}")
+
+    results_df, source_metadata = wqp.get_results(**kwargs)
+
+    print(f"Fetched {len(results_df)} result rows.")
+
+    metadata = build_query_metadata(params, row_count=len(results_df), source_metadata=source_metadata)
+    return results_df, metadata

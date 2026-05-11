@@ -10,6 +10,11 @@ dependencies = [
     "duckdb>=1.1.0",
     "dataretrieval>=1.1.4",
     "requests>=2.31.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings",
+    "python-dotenv",
+    "pytest>=9.0.3",
+    "pyarrow>=24.0.0",
 ]
 
 [build-system]
@@ -18,3 +23,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["src/tests"]
+filterwarnings = [
+    "ignore::DeprecationWarning:dataretrieval",
+]
